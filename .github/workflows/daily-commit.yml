@@ -1,0 +1,46 @@
+# This workflow performs an automated daily commit to the repository.
+# It is designed to fulfill the task for DevSync Solutions.
+
+name: Daily Commit
+
+on:
+  schedule:
+    # Runs at 05:30 UTC every day (a specific time, not a wildcard)
+    - cron: '30 5 * * *'
+  
+  workflow_dispatch:
+    # This allows you to run the workflow manually from the GitHub Actions tab
+
+jobs:
+  auto-commit-job:
+    runs-on: ubuntu-latest
+    
+    # Give the workflow permission to write to the repository
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git User (for 24f2006027@ds.study.iitm.ac.in)
+        # This step name includes the required email address.
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Create daily update, commit, and push
+        run: |
+          # Create or update a file to ensure there's a change to commit
+          echo "Last automated update: $(date --utc +%Y-%m-%dT%H:%M:%SZ)" > daily-status.txt
+          
+          # Add the file to staging
+          git add daily-status.txt
+          
+          # Commit the change. 
+          # We use '[skip ci]' in the message to prevent this commit from triggering other workflows.
+          # We use '|| exit 0' to ensure the step doesn't fail if there are no changes (e.g., if run twice).
+          git commit -m "Automated daily update [skip ci]" || exit 0
+          
+          # Push the changes back to the repository
+          git push
