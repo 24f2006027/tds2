@@ -1,0 +1,46 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]  # ≥ 3 variants
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Required identifier step
+      - name: matrix-061f9ba
+        run: echo "Running matrix variant on ${{ matrix.os }}"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Generate build artifact
+        shell: bash
+        run: |
+          set -e
+          echo "Build output for OS=${{ matrix.os }}" > output.txt
+          echo "Run number: $GITHUB_RUN_NUMBER" >> output.txt
+          echo "Commit: $GITHUB_SHA" >> output.txt
+          echo "Timestamp: $(date +'%Y-%m-%dT%H:%M:%SZ')" >> output.txt
+          node -v >> output.txt
+          test -s output.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-061f9ba-${{ matrix.os }}
+          path: output.txt
+          if-no-files-found: error
